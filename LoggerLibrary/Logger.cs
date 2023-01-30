@@ -69,11 +69,9 @@ namespace LoggerLibrary
                         Result = LogConsole(logLevel, message);
                         break;
                     case LoggerTypeEnum.file:
-                        if (string.IsNullOrEmpty(FilePath)) throw new Exception("FilePath is empty!");
                         Result = LogFile(logLevel, message);
                         break;
                     case LoggerTypeEnum.stream:
-                        if (Stream is null) throw new Exception("Stream is null!");
                         LogStream(logLevel, message);
                         break;
                 }
@@ -118,7 +116,7 @@ namespace LoggerLibrary
         {
             try
             {
-                if (!File.Exists(FilePath)) File.Create(FilePath).Close();
+                if (string.IsNullOrEmpty(FilePath)) throw new Exception("FilePath is empty!");
                 File.AppendAllText(FilePath, CreateLogString(logLevel, message) + Environment.NewLine);
                 FileInfo fileInfo = new(FilePath);
                 if (fileInfo.Length >= 5120)
@@ -148,6 +146,7 @@ namespace LoggerLibrary
             LogResult result = new();
             try
             {
+                if (Stream is null) throw new Exception("Stream is null!");
                 byte[] bytes = Encoding.UTF8.GetBytes(CreateLogString(logLevel, message));
                 Stream.GetType().GetMethods().Single(m => m.Name == "Write" && m.GetParameters().Length == 3).Invoke(Stream, new object[] { bytes, 0, bytes.Length });
             }
