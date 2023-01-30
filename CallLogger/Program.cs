@@ -4,14 +4,12 @@
     {
         static void Main(string[] args)
         {
-            Log();
-            Console.ReadLine();
-        }
-        private static async Task Log() {
+            var x = new MemoryStream();
             Logger logger = new(Logger.LoggerTypeEnum.console);
-            await logger.CreateLogAsync(Logger.LogLevelEnum.debug, "debug logger");
-            await logger.CreateLogAsync(Logger.LogLevelEnum.info, "info logger");
-            await logger.CreateLogAsync(Logger.LogLevelEnum.error, "error logger");
+            logger.CreateLog(Logger.LogLevelEnum.debug, "debug logger");
+            logger.CreateLog(Logger.LogLevelEnum.info, "info logger");
+            logger.CreateLog(Logger.LogLevelEnum.error, "error logger");
+            Console.ReadLine();
         }
     }
 }

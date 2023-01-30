@@ -24,7 +24,7 @@ namespace LoggerLibrary
         public LoggerTypeEnum Type { get; set; }
         public string? FilePath { get; set; }
         public object? Stream { get; set; }
-        //public LogResult Result { get; set; }
+        public LogResult Result { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -32,7 +32,7 @@ namespace LoggerLibrary
         /// <param name="arg">In case of Console it is not needed. File logtype it must be the full path of the file. In case of a Stream ot must be a Stream object.</param>
         public Logger(LoggerTypeEnum loggerType, object? arg = null)
         {
-            LogResult Result = new();
+            Result = new();
             try
             {
                 switch (loggerType)
@@ -56,23 +56,25 @@ namespace LoggerLibrary
             {
                 Result.Result = LogResult.ResultEnum.Error;
                 Result.Exception = ex;
+                
             }
         }
-        public async Task<LogResult> CreateLogAsync(LogLevelEnum logLevel, string message)
+        public LogResult CreateLog(LogLevelEnum logLevel, string message)
         {
-            LogResult Result = new();
             try
             {
                 switch (Type)
                 {
                     case LoggerTypeEnum.console:
-                        await Task.Run(() => { Result = LogConsole(logLevel, message); });
+                        Result = LogConsole(logLevel, message);
                         break;
                     case LoggerTypeEnum.file:
-                        await Task.Run(() => { Result = LogFile(logLevel, message); });
+                        if (string.IsNullOrEmpty(FilePath)) throw new Exception("FilePath is empty!");
+                        Result = LogFile(logLevel, message);
                         break;
                     case LoggerTypeEnum.stream:
-                        await Task.Run(() => { Result = LogStream(logLevel, message); });
+                        if (Stream is null) throw new Exception("Stream is null!");
+                        LogStream(logLevel, message);
                         break;
                 }
             }
@@ -85,7 +87,6 @@ namespace LoggerLibrary
         }
         private LogResult LogConsole(LogLevelEnum logLevel, string message)
         {
-            LogResult Result = new();
             try
             {
                 if(message.Length > 1000) throw new Exception("Console cannot be longer than 1000 characters!");
@@ -115,10 +116,9 @@ namespace LoggerLibrary
         }
         private LogResult LogFile(LogLevelEnum logLevel, string message)
         {
-            LogResult Result = new();
             try
             {
-                if (string.IsNullOrEmpty(FilePath)) throw new Exception("FilePath is empty!");
+                if (!File.Exists(FilePath)) File.Create(FilePath).Close();
                 File.AppendAllText(FilePath, CreateLogString(logLevel, message) + Environment.NewLine);
                 FileInfo fileInfo = new(FilePath);
                 if (fileInfo.Length >= 5120)
@@ -145,11 +145,9 @@ namespace LoggerLibrary
         }
         private LogResult LogStream(LogLevelEnum logLevel, string message)
         {
-            LogResult Result = new();
             LogResult result = new();
             try
             {
-                if (Stream is null) throw new Exception("Stream is null!");
                 byte[] bytes = Encoding.UTF8.GetBytes(CreateLogString(logLevel, message));
                 Stream.GetType().GetMethods().Single(m => m.Name == "Write" && m.GetParameters().Length == 3).Invoke(Stream, new object[] { bytes, 0, bytes.Length });
             }
